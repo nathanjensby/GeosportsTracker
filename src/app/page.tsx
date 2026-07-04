@@ -3,7 +3,7 @@ import { LeaderboardCard } from "@/components/dashboard/leaderboard-card";
 import { ScoreTrendChart } from "@/components/dashboard/score-trend-chart";
 import { StatsSummaryRow } from "@/components/dashboard/stats-summary-row";
 import { dataSource } from "@/data/source";
-import { computePlayerStats, computeSummaryStats } from "@/lib/stats";
+import { computePlayerStats, computeRankChanges, computeSummaryStats } from "@/lib/stats";
 
 // Matches GoogleSheetsDataSource's own in-memory cache TTL — without this the
 // route has no dynamic APIs and Next prerenders it once at build time, then
@@ -18,6 +18,7 @@ export default async function DashboardPage() {
 
   const playerStats = computePlayerStats(players, dailyResults);
   const summary = computeSummaryStats(players, dailyResults, playerStats);
+  const rankChanges = computeRankChanges(players, dailyResults);
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10">
@@ -32,7 +33,7 @@ export default async function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-3">
-          <LeaderboardCard players={players} playerStats={playerStats} />
+          <LeaderboardCard players={players} playerStats={playerStats} rankChanges={rankChanges} />
         </div>
         <div className="min-w-0 lg:col-span-2">
           <DailyResultsCard day={summary.latestDay} players={players} />

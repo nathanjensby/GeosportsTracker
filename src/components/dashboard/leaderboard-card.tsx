@@ -2,22 +2,63 @@
 
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getInitials } from "@/lib/players";
 import { rankPlayers } from "@/lib/stats";
-import type { Player, PlayerStats } from "@/types";
-import { Flame, Trophy } from "lucide-react";
+import type { Player, PlayerStats, RankChange } from "@/types";
+import { Flame, Trophy, Triangle } from "lucide-react";
 
 const RANK_MEDAL = ["🥇", "🥈", "🥉"];
+
+/** Green triangle for a leaderboard climb, red for a drop, since the previous game day. */
+function RankChangeIndicator({ change }: Readonly<{ change?: RankChange }>) {
+  if (change === "up") {
+    return (
+      <Triangle
+        className="size-2.5 shrink-0 fill-green-600 text-green-600"
+        aria-label="Moved up the leaderboard"
+      />
+    );
+  }
+  if (change === "down") {
+    return (
+      <Triangle
+        className="size-2.5 shrink-0 rotate-180 fill-red-600 text-red-600"
+        aria-label="Moved down the leaderboard"
+      />
+    );
+  }
+  return null;
+}
+
+/** Fire for a 3+ day win streak, poop for a 3+ day losing streak — mutually exclusive. */
+function StreakIndicator({ stats }: Readonly<{ stats: PlayerStats }>) {
+  if (stats.currentWinStreak >= 3) {
+    return (
+      <Flame
+        className="size-4 shrink-0 text-amber-600"
+        aria-label={`On a ${stats.currentWinStreak}-day win streak`}
+      />
+    );
+  }
+  if (stats.currentLossStreak >= 3) {
+    return (
+      <span className="shrink-0" role="img" aria-label={`On a ${stats.currentLossStreak}-day losing streak`}>
+        💩
+      </span>
+    );
+  }
+  return null;
+}
 
 interface LeaderboardCardProps {
   players: Player[];
   playerStats: PlayerStats[];
+  rankChanges: Map<string, RankChange>;
 }
 
-export function LeaderboardCard({ players, playerStats }: LeaderboardCardProps) {
+export function LeaderboardCard({ players, playerStats, rankChanges }: Readonly<LeaderboardCardProps>) {
   const router = useRouter();
   const playerMap = Object.fromEntries(players.map((p) => [p.id, p]));
   const ranked = rankPlayers(playerStats).filter((s) => s.gamesPlayed > 0);
@@ -63,7 +104,10 @@ export function LeaderboardCard({ players, playerStats }: LeaderboardCardProps) 
                   }}
                 >
                   <TableCell className="font-medium text-muted-foreground">
-                    {RANK_MEDAL[index] ?? index + 1}
+                    <div className="flex items-center gap-1">
+                      {RANK_MEDAL[index] ?? index + 1}
+                      <RankChangeIndicator change={rankChanges.get(stats.playerId)} />
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
@@ -72,12 +116,7 @@ export function LeaderboardCard({ players, playerStats }: LeaderboardCardProps) 
                       </Avatar>
                       <div className="flex min-w-0 items-center gap-1.5">
                         <span className="max-w-28 truncate font-medium sm:max-w-none">{player.name}</span>
-                        {stats.currentStreak >= 3 ? (
-                          <Badge variant="secondary" className="shrink-0 gap-1 px-1.5 text-amber-600">
-                            <Flame className="size-3" />
-                            {stats.currentStreak}
-                          </Badge>
-                        ) : null}
+                        <StreakIndicator stats={stats} />
                       </div>
                     </div>
                   </TableCell>

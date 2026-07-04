@@ -1,42 +1,82 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatTile } from "@/components/ui/stat-tile";
+import { getInitials } from "@/lib/players";
 import type { Player, SummaryStats } from "@/types";
-import { Gamepad2, Target, Trophy, Frown } from "lucide-react";
+import { Star, Target, Trophy, Frown } from "lucide-react";
 
 interface StatsSummaryRowProps {
   summary: SummaryStats;
   players: Player[];
 }
 
-export function StatsSummaryRow({ summary, players }: StatsSummaryRowProps) {
-  const topPlayerName = summary.topPlayer
-    ? players.find((p) => p.id === summary.topPlayer!.playerId)?.name
+function PlayerAvatar({ player }: Readonly<{ player: Player }>) {
+  return (
+    <Avatar className="size-6" title={player.name}>
+      {player.avatarUrl ? <AvatarImage src={player.avatarUrl} alt={player.name} /> : null}
+      <AvatarFallback className="text-[10px]">{getInitials(player.name)}</AvatarFallback>
+    </Avatar>
+  );
+}
+
+function PlayerIconAvatar({ player }: Readonly<{ player: Player }>) {
+  return (
+    <Avatar className="size-10" title={player.name}>
+      {player.avatarUrl ? <AvatarImage src={player.avatarUrl} alt={player.name} /> : null}
+      <AvatarFallback className="text-xs">{getInitials(player.name)}</AvatarFallback>
+    </Avatar>
+  );
+}
+
+export function StatsSummaryRow({ summary, players }: Readonly<StatsSummaryRowProps>) {
+  const topPlayer = summary.topPlayer
+    ? players.find((p) => p.id === summary.topPlayer!.playerId)
     : null;
+
+  const topScoreToday = summary.latestDay?.scores.length
+    ? summary.latestDay.scores.reduce(
+        (best, s) => (s.score > best.score ? s : best),
+        summary.latestDay.scores[0],
+      )
+    : null;
+  const topScorer = topScoreToday ? players.find((p) => p.id === topScoreToday.playerId) : null;
+
+  const lowScoreToday = summary.latestDay?.scores.length
+    ? summary.latestDay.scores.reduce(
+        (worst, s) => (s.score < worst.score ? s : worst),
+        summary.latestDay.scores[0],
+      )
+    : null;
+  const lowScorer = lowScoreToday ? players.find((p) => p.id === lowScoreToday.playerId) : null;
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       <StatTile
-        label="Games logged"
-        value={summary.totalGamesLogged.toLocaleString()}
-        hint={`${summary.totalPlayers} players`}
-        icon={<Gamepad2 className="size-5" />}
+        label="Today's high score"
+        value={topScoreToday ? String(topScoreToday.score) : "—"}
+        hint={
+          topScorer ? (topScorer.name) : (
+            "no games yet"
+          )
+        }
+        icon={<Star className="size-5 text-amber-500" />}
       />
       <StatTile
         label="Group average"
         value={summary.allTimeAverageScore.toLocaleString()}
-        hint="out of 1,000"
+        hint="out of 1000"
         icon={<Target className="size-5" />}
       />
       <StatTile
         label="Reigning champ"
-        value={topPlayerName ?? "—"}
-        hint={summary.topPlayer ? `${summary.topPlayer.wins} wins` : "no games yet"}
-        icon={<Trophy className="size-5 text-amber-500" />}
+        value={topPlayer?.name ?? "—"}
+        hint={topPlayer ? `${summary.topPlayer!.wins} wins` : "no games yet"}
+        icon={topPlayer ? <PlayerIconAvatar player={topPlayer} /> : <Trophy className="size-5 text-amber-500" />}
       />
       <StatTile
-        label="Today's low bar"
-        value={summary.latestDay ? String(Math.min(...summary.latestDay.scores.map((s) => s.score))) : "—"}
-        hint="lowest score, on the board"
-        icon={<Frown className="size-5" />}
+        label="Today's stupid"
+        value={lowScoreToday ? String(lowScoreToday.score) : "—"}
+        hint="dumbass"
+        icon={lowScorer ? <PlayerIconAvatar player={lowScorer} /> : <Frown className="size-5" />}
       />
     </div>
   );

@@ -58,7 +58,18 @@ export interface PlayerStats {
   currentStreak: number;
   /** Longest streak of consecutive days played, all-time. */
   bestStreak: number;
+  /** Consecutive most-recent days this player had the top score, ending today or the latest game day. */
+  currentWinStreak: number;
+  /** Consecutive most-recent days this player had the lowest score, ending today or the latest game day. */
+  currentLossStreak: number;
+  /** Days since this player last had the top score, relative to the latest game day. Null if they've never won. */
+  daysSinceLastWin: number | null;
+  /** Days since this player last had the lowest score, relative to the latest game day. Null if they've never been a Stupid. */
+  daysSinceLastStupid: number | null;
 }
+
+/** Which way a player's leaderboard position moved since the previous day's ranking. */
+export type RankChange = "up" | "down";
 
 /** Dashboard-wide summary numbers shown in the stats row up top. */
 export interface SummaryStats {
