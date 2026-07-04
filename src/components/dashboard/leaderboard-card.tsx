@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -15,6 +18,7 @@ interface LeaderboardCardProps {
 }
 
 export function LeaderboardCard({ players, playerStats }: LeaderboardCardProps) {
+  const router = useRouter();
   const playerMap = Object.fromEntries(players.map((p) => [p.id, p]));
   const ranked = rankPlayers(playerStats).filter((s) => s.gamesPlayed > 0);
 
@@ -44,7 +48,20 @@ export function LeaderboardCard({ players, playerStats }: LeaderboardCardProps) 
               if (!player) return null;
 
               return (
-                <TableRow key={stats.playerId}>
+                <TableRow
+                  key={stats.playerId}
+                  tabIndex={0}
+                  role="link"
+                  aria-label={`View ${player.name}'s stats`}
+                  className="cursor-pointer"
+                  onClick={() => router.push(`/players/${stats.playerId}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      router.push(`/players/${stats.playerId}`);
+                    }
+                  }}
+                >
                   <TableCell className="font-medium text-muted-foreground">
                     {RANK_MEDAL[index] ?? index + 1}
                   </TableCell>
