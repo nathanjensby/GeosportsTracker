@@ -35,7 +35,7 @@ export function LeaderboardCard({ players, playerStats }: LeaderboardCardProps) 
               <TableHead>Player</TableHead>
               <TableHead className="text-right">Avg</TableHead>
               <TableHead className="text-right">Wins</TableHead>
-              <TableHead className="text-right">Stupids</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">Stupids</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -49,14 +49,14 @@ export function LeaderboardCard({ players, playerStats }: LeaderboardCardProps) 
                     {RANK_MEDAL[index] ?? index + 1}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2.5">
-                      <Avatar className="size-8">
+                    <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+                      <Avatar className="size-7 shrink-0 sm:size-8">
                         <AvatarFallback className="text-xs">{getInitials(player.name)}</AvatarFallback>
                       </Avatar>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-medium">{player.name}</span>
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <span className="max-w-28 truncate font-medium sm:max-w-none">{player.name}</span>
                         {stats.currentStreak >= 3 ? (
-                          <Badge variant="secondary" className="gap-1 px-1.5 text-amber-600">
+                          <Badge variant="secondary" className="shrink-0 gap-1 px-1.5 text-amber-600">
                             <Flame className="size-3" />
                             {stats.currentStreak}
                           </Badge>
@@ -66,7 +66,7 @@ export function LeaderboardCard({ players, playerStats }: LeaderboardCardProps) 
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{stats.averageScore}</TableCell>
                   <TableCell className="text-right tabular-nums font-medium">{stats.wins}</TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
+                  <TableCell className="hidden text-right tabular-nums text-muted-foreground sm:table-cell">
                     {stats.stupids}
                   </TableCell>
                 </TableRow>

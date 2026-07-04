@@ -89,13 +89,13 @@ export function ScoreTrendChart({ dailyResults, players }: ScoreTrendChartProps)
         <CardDescription>Last {recentDays.length} days played</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-72 w-full sm:h-80">
+        <div className="h-64 w-full sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid vertical={false} stroke="var(--color-border)" />
               <XAxis
                 dataKey="dateLabel"
-                tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
+                tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
                 tickLine={false}
                 axisLine={{ stroke: "var(--color-border)" }}
                 interval="preserveStartEnd"
@@ -104,14 +104,14 @@ export function ScoreTrendChart({ dailyResults, players }: ScoreTrendChartProps)
                 domain={[0, 1000]}
                 ticks={[0, 250, 500, 750, 1000]}
                 tickFormatter={(value: number) => value.toLocaleString()}
-                tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
+                tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
                 tickLine={false}
                 axisLine={false}
-                width={48}
+                width={40}
               />
               <Tooltip content={<ChartTooltip playerMap={playerMap} />} />
               <Legend
-                wrapperStyle={{ fontSize: 13, paddingTop: 8 }}
+                wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
                 formatter={(value: string) => playerMap[value]?.name ?? value}
               />
               {players.map((player) => (

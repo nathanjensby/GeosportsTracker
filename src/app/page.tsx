@@ -26,10 +26,10 @@ export default async function DashboardPage() {
       <StatsSummaryRow summary={summary} players={players} />
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
+        <div className="min-w-0 lg:col-span-3">
           <LeaderboardCard players={players} playerStats={playerStats} />
         </div>
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           <DailyResultsCard day={summary.latestDay} players={players} />
         </div>
       </div>

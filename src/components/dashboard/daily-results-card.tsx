@@ -45,22 +45,22 @@ export function DailyResultsCard({ day, players }: DailyResultsCardProps) {
                 return (
                   <li
                     key={entry.playerId}
-                    className="flex items-center justify-between rounded-lg border border-transparent bg-muted/40 px-3 py-2 data-[highlight=true]:border-amber-300/60 data-[highlight=true]:bg-amber-50 dark:data-[highlight=true]:bg-amber-950/20"
+                    className="flex items-center justify-between gap-2 rounded-lg border border-transparent bg-muted/40 px-3 py-2 data-[highlight=true]:border-amber-300/60 data-[highlight=true]:bg-amber-50 dark:data-[highlight=true]:bg-amber-950/20"
                     data-highlight={isWinner}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Avatar className="size-8">
+                    <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+                      <Avatar className="size-8 shrink-0">
                         <AvatarFallback className="text-xs">{getInitials(player.name)}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{player.name}</span>
-                      {isWinner ? <Crown className="size-4 text-amber-500" /> : null}
+                      <span className="truncate font-medium">{player.name}</span>
+                      {isWinner ? <Crown className="size-4 shrink-0 text-amber-500" /> : null}
                       {isStupid ? (
-                        <Badge variant="outline" className="text-muted-foreground">
+                        <Badge variant="outline" className="shrink-0 text-muted-foreground">
                           Stupid
                         </Badge>
                       ) : null}
                     </div>
-                    <span className="tabular-nums font-semibold">{entry.score}</span>
+                    <span className="shrink-0 tabular-nums font-semibold">{entry.score}</span>
                   </li>
                 );
               })}

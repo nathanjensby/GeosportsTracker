@@ -28,6 +28,14 @@ export function SiteHeader() {
           ))}
         </nav>
       </div>
+
+      <nav className="flex items-center gap-4 overflow-x-auto px-4 pb-3 text-sm font-medium text-muted-foreground sm:hidden">
+        {NAV_LINKS.map((link) => (
+          <a key={link.href} href={link.href} className="shrink-0 transition-colors hover:text-foreground">
+            {link.label}
+          </a>
+        ))}
+      </nav>
     </header>
   );
 }
