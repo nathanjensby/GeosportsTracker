@@ -59,13 +59,13 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
     <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10">
       <Link
         href="/#leaderboard"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex w-fit animate-in fade-in items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-500 hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         Back to leaderboard
       </Link>
 
-      <div className="flex items-center gap-4">
+      <div className="flex animate-in fade-in slide-in-from-bottom-2 items-center gap-4 duration-500">
         <Avatar className="size-14">
           <AvatarFallback className="text-lg">{getInitials(player.name)}</AvatarFallback>
         </Avatar>
@@ -79,50 +79,59 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatTile
+          index={0}
           label="Games played"
           value={stats.gamesPlayed.toLocaleString()}
           icon={<Gamepad2 className="size-5" />}
         />
         <StatTile
+          index={1}
           label="Average score"
           value={stats.averageScore.toLocaleString()}
           hint="out of 1000"
           icon={<Target className="size-5" />}
         />
         <StatTile
+          index={2}
           label="Highest score"
           value={stats.gamesPlayed > 0 ? stats.bestScore.toLocaleString() : "—"}
           icon={<TrendingUp className="size-5" />}
         />
         <StatTile
+          index={3}
           label="Lowest score"
           value={stats.gamesPlayed > 0 ? stats.worstScore.toLocaleString() : "—"}
           icon={<TrendingDown className="size-5" />}
         />
         <StatTile
+          index={4}
           label="Win rate"
           value={`${winPct}%`}
           hint={`${stats.wins} win${stats.wins === 1 ? "" : "s"}`}
           icon={<Trophy className="size-5 text-amber-500" />}
         />
         <StatTile
+          index={5}
           label="Stupid rate"
           value={`${stupidPct}%`}
           hint={`${stats.stupids} stupid${stats.stupids === 1 ? "" : "s"}`}
           icon={<Frown className="size-5" />}
         />
         <StatTile
+          index={6}
           label="Current streak"
           value={`${stats.currentStreak} day${stats.currentStreak === 1 ? "" : "s"}`}
           icon={<Flame className="size-5 text-amber-600" />}
         />
         <StatTile
+          index={7}
           label="Days since last win"
           value={formatDaysSince(stats.daysSinceLastWin)}
           hint={stats.daysSinceLastWin === null ? "No wins yet" : undefined}
           icon={<CalendarCheck className="size-5 text-amber-500" />}
         />
         <StatTile
+          index={8}
           label="Days since last stupid"
           value={formatDaysSince(stats.daysSinceLastStupid)}
           hint={stats.daysSinceLastStupid === null ? "No stupids yet" : undefined}

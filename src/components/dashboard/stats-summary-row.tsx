@@ -51,6 +51,7 @@ export function StatsSummaryRow({ summary, players }: Readonly<StatsSummaryRowPr
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       <StatTile
+        index={0}
         label="Today's high score"
         value={topScoreToday ? String(topScoreToday.score) : "—"}
         hint={
@@ -61,18 +62,21 @@ export function StatsSummaryRow({ summary, players }: Readonly<StatsSummaryRowPr
         icon={<Star className="size-5 text-amber-500" />}
       />
       <StatTile
+        index={1}
         label="Group average"
         value={summary.allTimeAverageScore.toLocaleString()}
         hint="out of 1000"
         icon={<Target className="size-5" />}
       />
       <StatTile
+        index={2}
         label="Reigning champ"
         value={topPlayer?.name ?? "—"}
         hint={topPlayer ? `${summary.topPlayer!.wins} wins` : "no games yet"}
         icon={topPlayer ? <PlayerIconAvatar player={topPlayer} /> : <Trophy className="size-5 text-amber-500" />}
       />
       <StatTile
+        index={3}
         label="Today's stupid"
         value={lowScoreToday ? String(lowScoreToday.score) : "—"}
         hint="dumbass"

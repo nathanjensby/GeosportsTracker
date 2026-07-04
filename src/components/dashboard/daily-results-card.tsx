@@ -36,7 +36,7 @@ export function DailyResultsCard({ day, players }: DailyResultsCardProps) {
           <ul className="flex flex-col gap-2">
             {[...day.scores]
               .sort((a, b) => b.score - a.score)
-              .map((entry) => {
+              .map((entry, index) => {
                 const player = playerMap[entry.playerId];
                 if (!player) return null;
                 const isWinner = winnerIds.has(entry.playerId);
@@ -45,7 +45,8 @@ export function DailyResultsCard({ day, players }: DailyResultsCardProps) {
                 return (
                   <li
                     key={entry.playerId}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-transparent bg-muted/40 px-3 py-2 data-[highlight=true]:border-amber-300/60 data-[highlight=true]:bg-amber-50 dark:data-[highlight=true]:bg-amber-950/20"
+                    className="flex animate-in items-center justify-between gap-2 rounded-lg border border-transparent bg-muted/40 px-3 py-2 fade-in slide-in-from-left-2 duration-300 ease-out fill-mode-both transition-colors data-[highlight=true]:border-amber-300/60 data-[highlight=true]:bg-amber-50 dark:data-[highlight=true]:bg-amber-950/20"
+                    style={{ animationDelay: `${Math.min(index, 10) * 40}ms` }}
                     data-highlight={isWinner}
                   >
                     <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">

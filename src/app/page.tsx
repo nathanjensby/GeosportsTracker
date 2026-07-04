@@ -22,7 +22,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10">
-      <div>
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Dashboard</h1>
         <p className="mt-1 text-muted-foreground">
           Who&apos;s winning, who&apos;s streaking, and who&apos;s today&apos;s Stupid.
@@ -32,15 +32,17 @@ export default async function DashboardPage() {
       <StatsSummaryRow summary={summary} players={players} />
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <div className="min-w-0 lg:col-span-3">
+        <div className="min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150 fill-mode-both lg:col-span-3">
           <LeaderboardCard players={players} playerStats={playerStats} rankChanges={rankChanges} />
         </div>
-        <div className="min-w-0 lg:col-span-2">
+        <div className="min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150 fill-mode-both lg:col-span-2">
           <DailyResultsCard day={summary.latestDay} players={players} />
         </div>
       </div>
 
-      <ScoreTrendChart dailyResults={dailyResults} players={players} />
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-300 fill-mode-both">
+        <ScoreTrendChart dailyResults={dailyResults} players={players} />
+      </div>
     </div>
   );
 }

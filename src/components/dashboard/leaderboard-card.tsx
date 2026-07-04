@@ -94,7 +94,7 @@ export function LeaderboardCard({ players, playerStats, rankChanges }: Readonly<
                   tabIndex={0}
                   role="link"
                   aria-label={`View ${player.name}'s stats`}
-                  className="cursor-pointer"
+                  className="cursor-pointer transition-transform active:scale-[0.997]"
                   onClick={() => router.push(`/players/${stats.playerId}`)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
