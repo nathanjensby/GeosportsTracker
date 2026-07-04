@@ -34,3 +34,17 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+### Environment variables
+
+The app defaults to bundled mock data and needs no configuration to deploy. To
+point it at live data instead, set these in the Vercel project's
+Environment Variables settings (see `.env.local.example` for the full list):
+
+- `GEOSPORTS_DATA_SOURCE=sheets`
+- `GEOSPORTS_SHEET_ID`
+- `GEOSPORTS_WORKSHEET_NAME` (optional, defaults to `RawData`)
+- `GEOSPORTS_SERVICE_ACCOUNT_KEY_BASE64` — the Google service account key
+  file's JSON contents, base64-encoded (`base64 -i service-account.json`).
+  Required in deployed environments — there's no key file on disk there, so
+  `GEOSPORTS_SERVICE_ACCOUNT_KEY_PATH` (the local-dev option) won't work.

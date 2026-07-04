@@ -8,6 +8,7 @@ interface SheetsConfig {
   spreadsheetId: string;
   worksheetName: string;
   serviceAccountKeyPath: string;
+  serviceAccountKeyBase64: string | undefined;
 }
 
 function loadSheetsConfig(): SheetsConfig {
@@ -23,22 +24,40 @@ function loadSheetsConfig(): SheetsConfig {
     spreadsheetId,
     worksheetName: process.env.GEOSPORTS_WORKSHEET_NAME || "RawData",
     serviceAccountKeyPath: process.env.GEOSPORTS_SERVICE_ACCOUNT_KEY_PATH || "service-account.json",
+    serviceAccountKeyBase64: process.env.GEOSPORTS_SERVICE_ACCOUNT_KEY_BASE64,
   };
 }
 
 let cachedClient: sheets_v4.Sheets | null = null;
 
-function getSheetsClient(serviceAccountKeyPath: string): sheets_v4.Sheets {
+/**
+ * Deployed environments (e.g. Vercel) have no on-disk service-account file —
+ * it's gitignored on purpose. GEOSPORTS_SERVICE_ACCOUNT_KEY_BASE64 (the key
+ * file's JSON, base64-encoded to survive env var storage intact) takes
+ * priority so production reads credentials from Vercel's env vars; the
+ * key-file path remains for local dev convenience.
+ */
+function getSheetsClient(config: SheetsConfig): sheets_v4.Sheets {
   if (cachedClient) return cachedClient;
 
-  const keyFile = path.isAbsolute(serviceAccountKeyPath)
-    ? serviceAccountKeyPath
-    : path.join(/* turbopackIgnore: true */ process.cwd(), serviceAccountKeyPath);
+  if (config.serviceAccountKeyBase64) {
+    const credentials = JSON.parse(Buffer.from(config.serviceAccountKeyBase64, "base64").toString("utf8"));
+    const auth = new google.auth.GoogleAuth({
+      credentials,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    });
+    cachedClient = google.sheets({ version: "v4", auth });
+    return cachedClient;
+  }
+
+  const keyFile = path.isAbsolute(config.serviceAccountKeyPath)
+    ? config.serviceAccountKeyPath
+    : path.join(/* turbopackIgnore: true */ process.cwd(), config.serviceAccountKeyPath);
 
   if (!fs.existsSync(keyFile)) {
     throw new Error(
-      `Google service account key not found at ${keyFile}. Set GEOSPORTS_SERVICE_ACCOUNT_KEY_PATH ` +
-        "if it lives somewhere else.",
+      `Google service account key not found at ${keyFile}. Set GEOSPORTS_SERVICE_ACCOUNT_KEY_BASE64 ` +
+        "(required in deployed environments) or GEOSPORTS_SERVICE_ACCOUNT_KEY_PATH if the key file lives elsewhere.",
     );
   }
 
@@ -65,7 +84,7 @@ function getSheetsClient(serviceAccountKeyPath: string): sheets_v4.Sheets {
  */
 export async function fetchRawRows(): Promise<SheetCellValue[][]> {
   const config = loadSheetsConfig();
-  const client = getSheetsClient(config.serviceAccountKeyPath);
+  const client = getSheetsClient(config);
 
   const response = await client.spreadsheets.values.get({
     spreadsheetId: config.spreadsheetId,
