@@ -5,6 +5,11 @@ import { StatsSummaryRow } from "@/components/dashboard/stats-summary-row";
 import { dataSource } from "@/data/source";
 import { computePlayerStats, computeSummaryStats } from "@/lib/stats";
 
+// Matches GoogleSheetsDataSource's own in-memory cache TTL — without this the
+// route has no dynamic APIs and Next prerenders it once at build time, then
+// caches that HTML indefinitely (sheet updates would never show up).
+export const revalidate = 30;
+
 export default async function DashboardPage() {
   const [players, dailyResults] = await Promise.all([
     dataSource.getPlayers(),

@@ -7,6 +7,11 @@ import { getInitials } from "@/lib/players";
 import { computePlayerStats, rankPlayers } from "@/lib/stats";
 import { ArrowLeft, Flame, Frown, Gamepad2, Target, TrendingDown, TrendingUp, Trophy } from "lucide-react";
 
+// Matches GoogleSheetsDataSource's own in-memory cache TTL. There's no
+// generateStaticParams here, so player pages currently render fresh on first
+// visit only by accident; this makes the revalidation window explicit.
+export const revalidate = 30;
+
 interface PlayerPageProps {
   params: Promise<{ id: string }>;
 }
