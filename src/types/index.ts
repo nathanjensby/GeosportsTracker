@@ -48,6 +48,8 @@ export interface PlayerStats {
   playerId: string;
   gamesPlayed: number;
   averageScore: number;
+  /** Average daily rank across all games played (1 = first place). Lower is better. */
+  averageFinish: number;
   /** Number of days this player had the top score. */
   wins: number;
   /** Number of days this player had the lowest score — the "Stupids" count. */
@@ -70,6 +72,24 @@ export interface PlayerStats {
 
 /** Which way a player's leaderboard position moved since the previous day's ranking. */
 export type RankChange = "up" | "down";
+
+/** One player's computed standing within a single day's game. */
+export interface DailyPlayerStat {
+  playerId: string;
+  score: number;
+  /** 1-indexed rank for the day; tied scores share a rank (e.g. 1, 1, 3). */
+  rank: number;
+  /** Number of players who posted a score this day — the same for every row on a given day. */
+  gamesPlayedThatDay: number;
+  /** Whether this player had the day's top score. */
+  winner: boolean;
+  /** Whether this player had the day's lowest score — the day's "Stupid." */
+  stupid: boolean;
+  /** Points behind the day's top score. 0 for the winner(s). */
+  marginToFirst: number;
+  /** Points ahead of the day's lowest score. 0 for the Stupid(s). */
+  marginToLast: number;
+}
 
 /** Dashboard-wide summary numbers shown in the stats row up top. */
 export interface SummaryStats {

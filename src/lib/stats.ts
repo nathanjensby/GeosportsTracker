@@ -1,4 +1,4 @@
-import type { DailyResult, Player, PlayerStats, RankChange, SummaryStats } from "@/types";
+import type { DailyPlayerStat, DailyResult, Player, PlayerStats, RankChange, SummaryStats } from "@/types";
 
 function sortByDateAsc(days: DailyResult[]): DailyResult[] {
   return [...days].sort((a, b) => a.date.localeCompare(b.date));
@@ -67,6 +67,34 @@ export function getDailyStupidIds(day: DailyResult): string[] {
   return day.scores.filter((s) => s.score === min).map((s) => s.playerId);
 }
 
+/** Each player's rank, margins, and winner/Stupid flags for a single day's game. */
+export function computeDailyPlayerStats(day: DailyResult): DailyPlayerStat[] {
+  const gamesPlayedThatDay = day.scores.length;
+  if (gamesPlayedThatDay === 0) return [];
+
+  const winnerIds = new Set(getDailyWinnerIds(day));
+  const stupidIds = new Set(getDailyStupidIds(day));
+  const firstScore = Math.max(...day.scores.map((s) => s.score));
+  const lastScore = Math.min(...day.scores.map((s) => s.score));
+
+  const sortedDesc = [...day.scores].sort((a, b) => b.score - a.score);
+  const rankByScore = new Map<number, number>();
+  sortedDesc.forEach((entry, index) => {
+    if (!rankByScore.has(entry.score)) rankByScore.set(entry.score, index + 1);
+  });
+
+  return sortedDesc.map((entry) => ({
+    playerId: entry.playerId,
+    score: entry.score,
+    rank: rankByScore.get(entry.score)!,
+    gamesPlayedThatDay,
+    winner: winnerIds.has(entry.playerId),
+    stupid: stupidIds.has(entry.playerId),
+    marginToFirst: firstScore - entry.score,
+    marginToLast: entry.score - lastScore,
+  }));
+}
+
 /** Rolls raw daily results up into one stats row per player. */
 export function computePlayerStats(players: Player[], dailyResults: DailyResult[]): PlayerStats[] {
   const sortedDays = sortByDateAsc(dailyResults);
@@ -77,6 +105,7 @@ export function computePlayerStats(players: Player[], dailyResults: DailyResult[
     {
       gamesPlayed: number;
       totalScore: number;
+      totalRank: number;
       wins: number;
       stupids: number;
       bestScore: number;
@@ -92,6 +121,7 @@ export function computePlayerStats(players: Player[], dailyResults: DailyResult[
     totals.set(player.id, {
       gamesPlayed: 0,
       totalScore: 0,
+      totalRank: 0,
       wins: 0,
       stupids: 0,
       bestScore: -Infinity,
@@ -105,24 +135,22 @@ export function computePlayerStats(players: Player[], dailyResults: DailyResult[
   }
 
   for (const day of sortedDays) {
-    const winnerIds = new Set(getDailyWinnerIds(day));
-    const stupidIds = new Set(getDailyStupidIds(day));
-
-    for (const { playerId, score } of day.scores) {
-      const t = totals.get(playerId);
+    for (const dayStat of computeDailyPlayerStats(day)) {
+      const t = totals.get(dayStat.playerId);
       if (!t) continue;
 
       t.gamesPlayed++;
-      t.totalScore += score;
-      t.bestScore = Math.max(t.bestScore, score);
-      t.worstScore = Math.min(t.worstScore, score);
+      t.totalScore += dayStat.score;
+      t.totalRank += dayStat.rank;
+      t.bestScore = Math.max(t.bestScore, dayStat.score);
+      t.worstScore = Math.min(t.worstScore, dayStat.score);
       t.playedDates.push(day.date);
-      if (winnerIds.has(playerId)) {
+      if (dayStat.winner) {
         t.wins++;
         t.winDates.add(day.date);
         t.lastWinDate = day.date;
       }
-      if (stupidIds.has(playerId)) {
+      if (dayStat.stupid) {
         t.stupids++;
         t.stupidDates.add(day.date);
         t.lastStupidDate = day.date;
@@ -140,6 +168,7 @@ export function computePlayerStats(players: Player[], dailyResults: DailyResult[
       playerId: player.id,
       gamesPlayed: t.gamesPlayed,
       averageScore: t.gamesPlayed > 0 ? Math.round(t.totalScore / t.gamesPlayed) : 0,
+      averageFinish: t.gamesPlayed > 0 ? Math.round((t.totalRank / t.gamesPlayed) * 10) / 10 : 0,
       wins: t.wins,
       stupids: t.stupids,
       bestScore: t.gamesPlayed > 0 ? t.bestScore : 0,
