@@ -91,6 +91,66 @@ export interface DailyPlayerStat {
   marginToLast: number;
 }
 
+/** One shared game day between two players being compared head-to-head. */
+export interface HeadToHeadMatchup {
+  date: string;
+  playerAScore: number;
+  playerBScore: number;
+  /** Null on a tied score. */
+  winnerId: string | null;
+}
+
+/** One player's side of a head-to-head comparison, computed over shared games only. */
+export interface HeadToHeadPlayerLine {
+  playerId: string;
+  /** Days this player's score beat the opponent's. */
+  gamesAhead: number;
+  /** gamesAhead as a percentage of shared games played (0-100). */
+  winPct: number;
+  averageScore: number;
+  averageFinish: number;
+  highestScore: number;
+  lowestScore: number;
+  /** Days this player had the day's overall lowest score, among shared games. */
+  stupids: number;
+  /** Longest run of consecutive shared games this player finished ahead of the opponent. */
+  longestWinStreak: number;
+  /** Average points ahead of the opponent on days this player finished ahead. */
+  averageMarginOfVictory: number;
+}
+
+/** A full pairwise comparison between two players, restricted to games both played. */
+export interface HeadToHeadStats {
+  playerAId: string;
+  playerBId: string;
+  /** Number of days both players posted a score. */
+  gamesPlayed: number;
+  /** Shared games where both players tied. */
+  ties: number;
+  /** [playerA's line, playerB's line]. */
+  lines: [HeadToHeadPlayerLine, HeadToHeadPlayerLine];
+  biggestVictory: {
+    winnerId: string;
+    loserId: string;
+    margin: number;
+    date: string;
+    winnerScore: number;
+    loserScore: number;
+  } | null;
+  closestFinish: {
+    date: string;
+    margin: number;
+    playerAScore: number;
+    playerBScore: number;
+  } | null;
+  /** The active run of consecutive wins as of the latest shared game. Null if it ended in a tie or there are no shared games. */
+  currentStreak: { playerId: string; length: number } | null;
+  /** All shared games, ascending by date. */
+  matchups: HeadToHeadMatchup[];
+  /** Most recent shared games, descending by date, capped for display. */
+  recentMatchups: HeadToHeadMatchup[];
+}
+
 /** Dashboard-wide summary numbers shown in the stats row up top. */
 export interface SummaryStats {
   totalGamesLogged: number;

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { StatTile } from "@/components/ui/stat-tile";
 import { PlayerHeatmapCalendar } from "@/components/players/player-heatmap-calendar";
+import { PlayerHeadToHeadCard } from "@/components/players/player-head-to-head-card";
 import { dataSource } from "@/data/source";
 import { getInitials } from "@/lib/players";
 import { computePlayerStats, rankPlayers } from "@/lib/stats";
@@ -149,6 +150,8 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
       </div>
 
       <PlayerHeatmapCalendar playerId={id} dailyResults={dailyResults} />
+
+      <PlayerHeadToHeadCard playerId={id} players={players} dailyResults={dailyResults} />
     </div>
   );
 }
