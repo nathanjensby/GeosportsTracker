@@ -91,15 +91,29 @@ export function LeaderboardCard({
           Leaderboard
         </CardTitle>
         <CardDescription>{view.subtitle}</CardDescription>
-        <Tabs value={viewId} onValueChange={(value) => setViewId(value as LeaderboardViewId)} className="mt-3">
-          <div className="-mx-2 overflow-x-auto px-2 pb-1">
-            <TabsList className="w-max">
-              {LEADERBOARD_VIEWS.map((v) => (
-                <TabsTrigger key={v.id} value={v.id} className="px-3">
-                  {v.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+        <Tabs
+          value={viewId}
+          onValueChange={(value) => setViewId(value as LeaderboardViewId)}
+          className="mt-3 min-w-0"
+        >
+          <div className="relative">
+            <div
+              className={cn(
+                "-mx-2 touch-pan-x overflow-x-auto overscroll-x-contain px-2 pb-1",
+                "snap-x snap-mandatory scroll-px-2",
+                "scrollbar-none [-ms-overflow-style:none]",
+              )}
+            >
+              <TabsList className="w-max">
+                {LEADERBOARD_VIEWS.map((v) => (
+                  <TabsTrigger key={v.id} value={v.id} className="snap-start px-3">
+                    {v.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
+            {/* Fades the trailing edge so the strip reads as scrollable instead of just cut off on narrow screens. */}
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l from-card to-transparent sm:hidden" />
           </div>
         </Tabs>
       </CardHeader>
