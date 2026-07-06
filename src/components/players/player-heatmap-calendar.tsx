@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { computeDailyPlayerStats } from "@/lib/stats";
 import type { DailyResult } from "@/types";
-import { Star } from "lucide-react";
+import { Skull, Star } from "lucide-react";
 
 interface PlayerHeatmapCalendarProps {
   playerId: string;
@@ -43,10 +43,16 @@ function formatDisplayDate(dateStr: string): string {
   });
 }
 
-function scoreColorClass(score: number): string {
-  if (score >= 850) return "bg-emerald-500 dark:bg-emerald-600";
-  if (score >= 700) return "bg-amber-400 dark:bg-amber-500";
-  return "bg-rose-500 dark:bg-rose-600";
+const SCORE_TIERS: { min: number; label: string; bg: string; star: string }[] = [
+  { min: 900, label: "900+", bg: "bg-emerald-700 dark:bg-emerald-400", star: "text-white dark:text-emerald-950" },
+  { min: 800, label: "800–899", bg: "bg-emerald-600 dark:bg-emerald-500", star: "text-white" },
+  { min: 700, label: "700–799", bg: "bg-emerald-500 dark:bg-emerald-600", star: "text-white" },
+  { min: 600, label: "600–699", bg: "bg-emerald-300 dark:bg-emerald-800", star: "text-emerald-950 dark:text-white" },
+  { min: -Infinity, label: "<600", bg: "bg-emerald-100 dark:bg-emerald-950", star: "text-emerald-900 dark:text-emerald-100" },
+];
+
+function getScoreTier(score: number) {
+  return SCORE_TIERS.find((tier) => score >= tier.min) ?? SCORE_TIERS[SCORE_TIERS.length - 1];
 }
 
 export function PlayerHeatmapCalendar({ playerId, dailyResults }: PlayerHeatmapCalendarProps) {
@@ -110,52 +116,45 @@ export function PlayerHeatmapCalendar({ playerId, dailyResults }: PlayerHeatmapC
                   <span className="block h-4.5 text-[10px] leading-4.5 whitespace-nowrap text-muted-foreground">
                     {monthLabels[weekIndex] ?? ""}
                   </span>
-                  {week.map((cell) => (
-                    <div
-                      key={cell.date}
-                      title={
-                        cell.score === null
-                          ? formatDisplayDate(cell.date)
-                          : `${formatDisplayDate(cell.date)}: ${cell.score}${cell.winner ? " · Highest" : ""}${cell.stupid ? " · Lowest" : ""}`
-                      }
-                      className={`relative size-4 rounded-xs sm:size-5 ${
-                        cell.score === null ? "bg-muted" : scoreColorClass(cell.score)
-                      }`}
-                    >
-                      {cell.winner ? (
-                        <Star className="absolute inset-0 m-auto size-2.5 text-white sm:size-3" />
-                      ) : null}
-                      {cell.stupid ? (
-                        <span className="absolute inset-0 m-auto flex items-center justify-center text-[8px] leading-none sm:text-[10px]">
-                          💩
-                        </span>
-                      ) : null}
-                    </div>
-                  ))}
+                  {week.map((cell) => {
+                    const tier = cell.score === null ? null : getScoreTier(cell.score);
+                    return (
+                      <div
+                        key={cell.date}
+                        title={
+                          cell.score === null
+                            ? formatDisplayDate(cell.date)
+                            : `${formatDisplayDate(cell.date)}: ${cell.score}${cell.winner ? " · Highest" : ""}${cell.stupid ? " · Lowest" : ""}`
+                        }
+                        className={`relative size-4 rounded-xs sm:size-5 ${tier ? tier.bg : "bg-muted"}`}
+                      >
+                        {cell.winner ? (
+                          <Star className={`absolute inset-0 m-auto size-2.5 sm:size-3 ${tier?.star ?? "text-white"}`} />
+                        ) : null}
+                        {cell.stupid ? (
+                          <Skull className={`absolute inset-0 m-auto size-2.5 sm:size-3 ${tier?.star ?? "text-white"}`} />
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <span className="size-3 rounded-xs bg-emerald-500 dark:bg-emerald-600" />
-            850+
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="size-3 rounded-xs bg-amber-400 dark:bg-amber-500" />
-            700–849
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="size-3 rounded-xs bg-rose-500 dark:bg-rose-600" />
-            &lt;700
-          </div>
+          {SCORE_TIERS.map((tier) => (
+            <div key={tier.label} className="flex items-center gap-1.5">
+              <span className={`size-3 rounded-xs ${tier.bg}`} />
+              {tier.label}
+            </div>
+          ))}
           <div className="flex items-center gap-1.5">
             <Star className="size-3 text-foreground" />
             Highest that day
           </div>
           <div className="flex items-center gap-1.5">
-            <span>💩</span>
+            <Skull className="size-3 text-foreground" />
             Lowest that day
           </div>
         </div>

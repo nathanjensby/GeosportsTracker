@@ -9,6 +9,20 @@ interface StatsSummaryRowProps {
   players: Player[];
 }
 
+const LOSER_INSULTS = [
+  "idiot",
+  "moron",
+  "dumbass",
+  "shithead",
+  "dumbfuck",
+  "fucktard",
+  "shit-for-brains",
+];
+
+function randomLoserInsult() {
+  return LOSER_INSULTS[Math.floor(Math.random() * LOSER_INSULTS.length)];
+}
+
 function PlayerAvatar({ player }: Readonly<{ player: Player }>) {
   return (
     <Avatar className="size-6" title={player.name}>
@@ -79,7 +93,7 @@ export function StatsSummaryRow({ summary, players }: Readonly<StatsSummaryRowPr
         index={3}
         label="Today's stupid"
         value={lowScoreToday ? String(lowScoreToday.score) : "—"}
-        hint="dumbass"
+        hint={randomLoserInsult()}
         icon={lowScorer ? <PlayerIconAvatar player={lowScorer} /> : <Frown className="size-5" />}
       />
     </div>

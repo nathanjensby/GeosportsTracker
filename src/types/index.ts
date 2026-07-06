@@ -54,8 +54,16 @@ export interface PlayerStats {
   wins: number;
   /** Number of days this player had the lowest score — the "Stupids" count. */
   stupids: number;
+  /** wins as a percentage of games played (0-100). */
+  winPct: number;
+  /** stupids as a percentage of games played (0-100). */
+  stupidPct: number;
   bestScore: number;
   worstScore: number;
+  /** Sum of every score this player has posted, all-time. */
+  totalScore: number;
+  /** Population standard deviation of this player's scores. Lower means more consistent. */
+  scoreStdDev: number;
   /** Consecutive most-recent days played, ending today or the latest game day. */
   currentStreak: number;
   /** Longest streak of consecutive days played, all-time. */
@@ -64,6 +72,8 @@ export interface PlayerStats {
   currentWinStreak: number;
   /** Consecutive most-recent days this player had the lowest score, ending today or the latest game day. */
   currentLossStreak: number;
+  /** Consecutive most-recent days this player finished in the top 3, ending today or the latest game day. */
+  currentTop3Streak: number;
   /** Days since this player last had the top score, relative to the latest game day. Null if they've never won. */
   daysSinceLastWin: number | null;
   /** Days since this player last had the lowest score, relative to the latest game day. Null if they've never been a Stupid. */
@@ -89,6 +99,66 @@ export interface DailyPlayerStat {
   marginToFirst: number;
   /** Points ahead of the day's lowest score. 0 for the Stupid(s). */
   marginToLast: number;
+}
+
+/** One shared game day between two players being compared head-to-head. */
+export interface HeadToHeadMatchup {
+  date: string;
+  playerAScore: number;
+  playerBScore: number;
+  /** Null on a tied score. */
+  winnerId: string | null;
+}
+
+/** One player's side of a head-to-head comparison, computed over shared games only. */
+export interface HeadToHeadPlayerLine {
+  playerId: string;
+  /** Days this player's score beat the opponent's. */
+  gamesAhead: number;
+  /** gamesAhead as a percentage of shared games played (0-100). */
+  winPct: number;
+  averageScore: number;
+  averageFinish: number;
+  highestScore: number;
+  lowestScore: number;
+  /** Days this player had the day's overall lowest score, among shared games. */
+  stupids: number;
+  /** Longest run of consecutive shared games this player finished ahead of the opponent. */
+  longestWinStreak: number;
+  /** Average points ahead of the opponent on days this player finished ahead. */
+  averageMarginOfVictory: number;
+}
+
+/** A full pairwise comparison between two players, restricted to games both played. */
+export interface HeadToHeadStats {
+  playerAId: string;
+  playerBId: string;
+  /** Number of days both players posted a score. */
+  gamesPlayed: number;
+  /** Shared games where both players tied. */
+  ties: number;
+  /** [playerA's line, playerB's line]. */
+  lines: [HeadToHeadPlayerLine, HeadToHeadPlayerLine];
+  biggestVictory: {
+    winnerId: string;
+    loserId: string;
+    margin: number;
+    date: string;
+    winnerScore: number;
+    loserScore: number;
+  } | null;
+  closestFinish: {
+    date: string;
+    margin: number;
+    playerAScore: number;
+    playerBScore: number;
+  } | null;
+  /** The active run of consecutive wins as of the latest shared game. Null if it ended in a tie or there are no shared games. */
+  currentStreak: { playerId: string; length: number } | null;
+  /** All shared games, ascending by date. */
+  matchups: HeadToHeadMatchup[];
+  /** Most recent shared games, descending by date, capped for display. */
+  recentMatchups: HeadToHeadMatchup[];
 }
 
 /** Dashboard-wide summary numbers shown in the stats row up top. */

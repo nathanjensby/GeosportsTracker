@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { StatTile } from "@/components/ui/stat-tile";
 import { PlayerHeatmapCalendar } from "@/components/players/player-heatmap-calendar";
+import { PlayerHeadToHeadCard } from "@/components/players/player-head-to-head-card";
 import { dataSource } from "@/data/source";
 import { getInitials } from "@/lib/players";
 import { computePlayerStats, rankPlayers } from "@/lib/stats";
@@ -47,9 +48,6 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
   const rank = rankPlayers(playerStats)
     .filter((s) => s.gamesPlayed > 0)
     .findIndex((s) => s.playerId === id);
-
-  const winPct = stats.gamesPlayed > 0 ? Math.round((stats.wins / stats.gamesPlayed) * 100) : 0;
-  const stupidPct = stats.gamesPlayed > 0 ? Math.round((stats.stupids / stats.gamesPlayed) * 100) : 0;
 
   const formatDaysSince = (days: number | null) => {
     if (days === null) return "—";
@@ -115,14 +113,14 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
         <StatTile
           index={5}
           label="Win rate"
-          value={`${winPct}%`}
+          value={`${stats.winPct}%`}
           hint={`${stats.wins} win${stats.wins === 1 ? "" : "s"}`}
           icon={<Trophy className="size-5 text-amber-500" />}
         />
         <StatTile
           index={6}
           label="Stupid rate"
-          value={`${stupidPct}%`}
+          value={`${stats.stupidPct}%`}
           hint={`${stats.stupids} stupid${stats.stupids === 1 ? "" : "s"}`}
           icon={<Frown className="size-5" />}
         />
@@ -149,6 +147,8 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
       </div>
 
       <PlayerHeatmapCalendar playerId={id} dailyResults={dailyResults} />
+
+      <PlayerHeadToHeadCard playerId={id} players={players} dailyResults={dailyResults} />
     </div>
   );
 }
