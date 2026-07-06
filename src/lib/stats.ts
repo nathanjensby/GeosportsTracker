@@ -1,3 +1,4 @@
+import { sortByFields, type SortField } from "@/lib/sort";
 import type {
   DailyPlayerStat,
   DailyResult,
@@ -105,104 +106,134 @@ export function computeDailyPlayerStats(day: DailyResult): DailyPlayerStat[] {
   }));
 }
 
+interface PlayerTotals {
+  gamesPlayed: number;
+  totalScore: number;
+  totalScoreSquared: number;
+  totalRank: number;
+  wins: number;
+  stupids: number;
+  bestScore: number;
+  worstScore: number;
+  playedDates: string[];
+  winDates: Set<string>;
+  stupidDates: Set<string>;
+  top3Dates: Set<string>;
+  lastWinDate: string | null;
+  lastStupidDate: string | null;
+}
+
+function createEmptyTotals(): PlayerTotals {
+  return {
+    gamesPlayed: 0,
+    totalScore: 0,
+    totalScoreSquared: 0,
+    totalRank: 0,
+    wins: 0,
+    stupids: 0,
+    bestScore: -Infinity,
+    worstScore: Infinity,
+    playedDates: [],
+    winDates: new Set(),
+    stupidDates: new Set(),
+    top3Dates: new Set(),
+    lastWinDate: null,
+    lastStupidDate: null,
+  };
+}
+
+function accumulateDayStat(t: PlayerTotals, date: string, dayStat: DailyPlayerStat): void {
+  t.gamesPlayed++;
+  t.totalScore += dayStat.score;
+  t.totalScoreSquared += dayStat.score * dayStat.score;
+  t.totalRank += dayStat.rank;
+  t.bestScore = Math.max(t.bestScore, dayStat.score);
+  t.worstScore = Math.min(t.worstScore, dayStat.score);
+  t.playedDates.push(date);
+  if (dayStat.rank <= 3) t.top3Dates.add(date);
+  if (dayStat.winner) {
+    t.wins++;
+    t.winDates.add(date);
+    t.lastWinDate = date;
+  }
+  if (dayStat.stupid) {
+    t.stupids++;
+    t.stupidDates.add(date);
+    t.lastStupidDate = date;
+  }
+}
+
+function buildPlayerStats(playerId: string, t: PlayerTotals, latestDate: string | null): PlayerStats {
+  const { currentStreak, bestStreak } = computeStreaks(t.playedDates, latestDate);
+  const mean = t.gamesPlayed > 0 ? t.totalScore / t.gamesPlayed : 0;
+  const variance = t.gamesPlayed > 0 ? Math.max(0, t.totalScoreSquared / t.gamesPlayed - mean * mean) : 0;
+
+  return {
+    playerId,
+    gamesPlayed: t.gamesPlayed,
+    averageScore: t.gamesPlayed > 0 ? Math.round(mean) : 0,
+    averageFinish: t.gamesPlayed > 0 ? Math.round((t.totalRank / t.gamesPlayed) * 10) / 10 : 0,
+    wins: t.wins,
+    stupids: t.stupids,
+    winPct: t.gamesPlayed > 0 ? Math.round((t.wins / t.gamesPlayed) * 100) : 0,
+    stupidPct: t.gamesPlayed > 0 ? Math.round((t.stupids / t.gamesPlayed) * 100) : 0,
+    bestScore: t.gamesPlayed > 0 ? t.bestScore : 0,
+    worstScore: t.gamesPlayed > 0 ? t.worstScore : 0,
+    totalScore: t.totalScore,
+    scoreStdDev: Math.round(Math.sqrt(variance) * 10) / 10,
+    currentStreak,
+    bestStreak,
+    currentWinStreak: computeResultStreak(t.playedDates, t.winDates, latestDate),
+    currentLossStreak: computeResultStreak(t.playedDates, t.stupidDates, latestDate),
+    currentTop3Streak: computeResultStreak(t.playedDates, t.top3Dates, latestDate),
+    daysSinceLastWin:
+      t.lastWinDate !== null && latestDate !== null ? daysBetween(t.lastWinDate, latestDate) : null,
+    daysSinceLastStupid:
+      t.lastStupidDate !== null && latestDate !== null ? daysBetween(t.lastStupidDate, latestDate) : null,
+  };
+}
+
 /** Rolls raw daily results up into one stats row per player. */
 export function computePlayerStats(players: Player[], dailyResults: DailyResult[]): PlayerStats[] {
   const sortedDays = sortByDateAsc(dailyResults);
   const latestDate = sortedDays.at(-1)?.date ?? null;
 
-  const totals = new Map<
-    string,
-    {
-      gamesPlayed: number;
-      totalScore: number;
-      totalRank: number;
-      wins: number;
-      stupids: number;
-      bestScore: number;
-      worstScore: number;
-      playedDates: string[];
-      winDates: Set<string>;
-      stupidDates: Set<string>;
-      lastWinDate: string | null;
-      lastStupidDate: string | null;
-    }
-  >();
-  for (const player of players) {
-    totals.set(player.id, {
-      gamesPlayed: 0,
-      totalScore: 0,
-      totalRank: 0,
-      wins: 0,
-      stupids: 0,
-      bestScore: -Infinity,
-      worstScore: Infinity,
-      playedDates: [],
-      winDates: new Set(),
-      stupidDates: new Set(),
-      lastWinDate: null,
-      lastStupidDate: null,
-    });
-  }
+  const totals = new Map<string, PlayerTotals>(players.map((player) => [player.id, createEmptyTotals()]));
 
   for (const day of sortedDays) {
     for (const dayStat of computeDailyPlayerStats(day)) {
       const t = totals.get(dayStat.playerId);
-      if (!t) continue;
-
-      t.gamesPlayed++;
-      t.totalScore += dayStat.score;
-      t.totalRank += dayStat.rank;
-      t.bestScore = Math.max(t.bestScore, dayStat.score);
-      t.worstScore = Math.min(t.worstScore, dayStat.score);
-      t.playedDates.push(day.date);
-      if (dayStat.winner) {
-        t.wins++;
-        t.winDates.add(day.date);
-        t.lastWinDate = day.date;
-      }
-      if (dayStat.stupid) {
-        t.stupids++;
-        t.stupidDates.add(day.date);
-        t.lastStupidDate = day.date;
-      }
+      if (t) accumulateDayStat(t, day.date, dayStat);
     }
   }
 
-  return players.map((player) => {
-    const t = totals.get(player.id)!;
-    const { currentStreak, bestStreak } = computeStreaks(t.playedDates, latestDate);
-    const currentWinStreak = computeResultStreak(t.playedDates, t.winDates, latestDate);
-    const currentLossStreak = computeResultStreak(t.playedDates, t.stupidDates, latestDate);
-
-    return {
-      playerId: player.id,
-      gamesPlayed: t.gamesPlayed,
-      averageScore: t.gamesPlayed > 0 ? Math.round(t.totalScore / t.gamesPlayed) : 0,
-      averageFinish: t.gamesPlayed > 0 ? Math.round((t.totalRank / t.gamesPlayed) * 10) / 10 : 0,
-      wins: t.wins,
-      stupids: t.stupids,
-      bestScore: t.gamesPlayed > 0 ? t.bestScore : 0,
-      worstScore: t.gamesPlayed > 0 ? t.worstScore : 0,
-      currentStreak,
-      bestStreak,
-      currentWinStreak,
-      currentLossStreak,
-      daysSinceLastWin:
-        t.lastWinDate !== null && latestDate !== null ? daysBetween(t.lastWinDate, latestDate) : null,
-      daysSinceLastStupid:
-        t.lastStupidDate !== null && latestDate !== null ? daysBetween(t.lastStupidDate, latestDate) : null,
-    };
-  });
+  return players.map((player) => buildPlayerStats(player.id, totals.get(player.id)!, latestDate));
 }
 
 /**
- * The one leaderboard ranking used everywhere: most wins first, ties broken
- * by fewest Stupids, remaining ties broken by highest average score.
+ * The app's one canonical "who's best overall" ordering: highest average
+ * score first, ties broken by most wins, remaining ties broken by fewest
+ * Stupids. Shared by the Overall/This Month leaderboard views, rank-change
+ * tracking, and the player page's rank badge so they never drift apart.
  */
+export const OVERALL_SORT_FIELDS: SortField<PlayerStats>[] = [
+  { key: "averageScore", direction: "desc" },
+  { key: "wins", direction: "desc" },
+  { key: "stupids", direction: "asc" },
+];
+
 export function rankPlayers(stats: PlayerStats[]): PlayerStats[] {
-  return [...stats].sort(
-    (a, b) => b.wins - a.wins || a.stupids - b.stupids || b.averageScore - a.averageScore,
-  );
+  return sortByFields(stats, OVERALL_SORT_FIELDS);
+}
+
+/** Keeps only the days that fall in the same UTC calendar month as `referenceDate`. */
+export function filterToCurrentMonth(dailyResults: DailyResult[], referenceDate: Date = new Date()): DailyResult[] {
+  const year = referenceDate.getUTCFullYear();
+  const month = referenceDate.getUTCMonth();
+  return dailyResults.filter((day) => {
+    const date = new Date(`${day.date}T00:00:00Z`);
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month;
+  });
 }
 
 /**

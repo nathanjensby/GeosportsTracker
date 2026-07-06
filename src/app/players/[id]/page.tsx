@@ -49,9 +49,6 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
     .filter((s) => s.gamesPlayed > 0)
     .findIndex((s) => s.playerId === id);
 
-  const winPct = stats.gamesPlayed > 0 ? Math.round((stats.wins / stats.gamesPlayed) * 100) : 0;
-  const stupidPct = stats.gamesPlayed > 0 ? Math.round((stats.stupids / stats.gamesPlayed) * 100) : 0;
-
   const formatDaysSince = (days: number | null) => {
     if (days === null) return "—";
     if (days === 0) return "Today";
@@ -116,14 +113,14 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
         <StatTile
           index={5}
           label="Win rate"
-          value={`${winPct}%`}
+          value={`${stats.winPct}%`}
           hint={`${stats.wins} win${stats.wins === 1 ? "" : "s"}`}
           icon={<Trophy className="size-5 text-amber-500" />}
         />
         <StatTile
           index={6}
           label="Stupid rate"
-          value={`${stupidPct}%`}
+          value={`${stats.stupidPct}%`}
           hint={`${stats.stupids} stupid${stats.stupids === 1 ? "" : "s"}`}
           icon={<Frown className="size-5" />}
         />

@@ -54,8 +54,16 @@ export interface PlayerStats {
   wins: number;
   /** Number of days this player had the lowest score — the "Stupids" count. */
   stupids: number;
+  /** wins as a percentage of games played (0-100). */
+  winPct: number;
+  /** stupids as a percentage of games played (0-100). */
+  stupidPct: number;
   bestScore: number;
   worstScore: number;
+  /** Sum of every score this player has posted, all-time. */
+  totalScore: number;
+  /** Population standard deviation of this player's scores. Lower means more consistent. */
+  scoreStdDev: number;
   /** Consecutive most-recent days played, ending today or the latest game day. */
   currentStreak: number;
   /** Longest streak of consecutive days played, all-time. */
@@ -64,6 +72,8 @@ export interface PlayerStats {
   currentWinStreak: number;
   /** Consecutive most-recent days this player had the lowest score, ending today or the latest game day. */
   currentLossStreak: number;
+  /** Consecutive most-recent days this player finished in the top 3, ending today or the latest game day. */
+  currentTop3Streak: number;
   /** Days since this player last had the top score, relative to the latest game day. Null if they've never won. */
   daysSinceLastWin: number | null;
   /** Days since this player last had the lowest score, relative to the latest game day. Null if they've never been a Stupid. */

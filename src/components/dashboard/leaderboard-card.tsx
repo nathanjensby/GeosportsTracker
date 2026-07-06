@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getInitials } from "@/lib/players";
-import { rankPlayers } from "@/lib/stats";
+import { LEADERBOARD_COLUMNS, LEADERBOARD_VIEWS, type LeaderboardViewId } from "@/lib/leaderboard-views";
+import { sortByFields } from "@/lib/sort";
+import { cn } from "@/lib/utils";
 import type { Player, PlayerStats, RankChange } from "@/types";
 import { Flame, Trophy, Triangle } from "lucide-react";
 
@@ -55,13 +59,29 @@ function StreakIndicator({ stats }: Readonly<{ stats: PlayerStats }>) {
 interface LeaderboardCardProps {
   players: Player[];
   playerStats: PlayerStats[];
+  monthlyPlayerStats: PlayerStats[];
   rankChanges: Map<string, RankChange>;
 }
 
-export function LeaderboardCard({ players, playerStats, rankChanges }: Readonly<LeaderboardCardProps>) {
+export function LeaderboardCard({
+  players,
+  playerStats,
+  monthlyPlayerStats,
+  rankChanges,
+}: Readonly<LeaderboardCardProps>) {
   const router = useRouter();
+  const [viewId, setViewId] = useState<LeaderboardViewId>("overall");
+  const view = LEADERBOARD_VIEWS.find((v) => v.id === viewId) ?? LEADERBOARD_VIEWS[0];
+
   const playerMap = Object.fromEntries(players.map((p) => [p.id, p]));
-  const ranked = rankPlayers(playerStats).filter((s) => s.gamesPlayed > 0);
+  const sourceStats = view.scope === "this-month" ? monthlyPlayerStats : playerStats;
+  const ranked = sortByFields(
+    sourceStats.filter((s) => s.gamesPlayed > 0),
+    view.sort,
+  );
+  // Rank-change arrows are computed off the all-time overall ranking, so only that view can show them meaningfully.
+  const showRankChange = view.id === "overall";
+  const lastColumnIndex = view.columns.length - 1;
 
   return (
     <Card id="leaderboard" className="scroll-mt-20">
@@ -70,7 +90,18 @@ export function LeaderboardCard({ players, playerStats, rankChanges }: Readonly<
           <Trophy className="size-5 text-amber-500" />
           Leaderboard
         </CardTitle>
-        <CardDescription>Ranked by wins, all-time</CardDescription>
+        <CardDescription>{view.subtitle}</CardDescription>
+        <Tabs value={viewId} onValueChange={(value) => setViewId(value as LeaderboardViewId)} className="mt-3">
+          <div className="-mx-2 overflow-x-auto px-2 pb-1">
+            <TabsList className="w-max">
+              {LEADERBOARD_VIEWS.map((v) => (
+                <TabsTrigger key={v.id} value={v.id} className="px-3">
+                  {v.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+        </Tabs>
       </CardHeader>
       <CardContent>
         <Table>
@@ -78,12 +109,24 @@ export function LeaderboardCard({ players, playerStats, rankChanges }: Readonly<
             <TableRow>
               <TableHead className="w-10">#</TableHead>
               <TableHead>Player</TableHead>
-              <TableHead className="text-right">Avg</TableHead>
-              <TableHead className="text-right">Wins</TableHead>
-              <TableHead className="hidden text-right sm:table-cell">Stupids</TableHead>
+              {view.columns.map((key, index) => (
+                <TableHead
+                  key={key}
+                  className={cn("text-right", index === lastColumnIndex && "hidden sm:table-cell")}
+                >
+                  {LEADERBOARD_COLUMNS[key].label}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
+            {ranked.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={2 + view.columns.length} className="py-8 text-center text-muted-foreground">
+                  No games logged for this view yet.
+                </TableCell>
+              </TableRow>
+            )}
             {ranked.map((stats, index) => {
               const player = playerMap[stats.playerId];
               if (!player) return null;
@@ -106,7 +149,7 @@ export function LeaderboardCard({ players, playerStats, rankChanges }: Readonly<
                   <TableCell className="font-medium text-muted-foreground">
                     <div className="flex items-center gap-1">
                       {RANK_MEDAL[index] ?? index + 1}
-                      <RankChangeIndicator change={rankChanges.get(stats.playerId)} />
+                      {showRankChange && <RankChangeIndicator change={rankChanges.get(stats.playerId)} />}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -120,11 +163,18 @@ export function LeaderboardCard({ players, playerStats, rankChanges }: Readonly<
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{stats.averageScore}</TableCell>
-                  <TableCell className="text-right tabular-nums font-medium">{stats.wins}</TableCell>
-                  <TableCell className="hidden text-right tabular-nums text-muted-foreground sm:table-cell">
-                    {stats.stupids}
-                  </TableCell>
+                  {view.columns.map((key, colIndex) => (
+                    <TableCell
+                      key={key}
+                      className={cn(
+                        "text-right tabular-nums",
+                        colIndex === 0 && "font-medium",
+                        colIndex === lastColumnIndex && "hidden text-muted-foreground sm:table-cell",
+                      )}
+                    >
+                      {LEADERBOARD_COLUMNS[key].format(stats)}
+                    </TableCell>
+                  ))}
                 </TableRow>
               );
             })}
