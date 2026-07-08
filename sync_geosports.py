@@ -5,6 +5,8 @@ import sqlite3
 import tempfile
 from pathlib import Path
 
+from datetime import datetime
+
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -29,6 +31,13 @@ REACTION_PREFIXES = (
     "Questioned ",
     "Reacted ",
 )
+
+# ----------------------------
+# LOGGING
+# ----------------------------
+def log(message: str):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {message}")
 
 # ----------------------------
 # STATE
@@ -130,17 +139,21 @@ def main():
     rows, max_rowid = fetch_new_rows(backup_db, last_rowid)
 
     if not rows:
-        print("No new GeoSports rows found.")
+        log("No new GeoSports rows found.")
         return
+
+    log(f"Found {len(rows)} new GeoSports row(s):")
+
     for row in rows:
-        print(f"{row[0]}  {row[1]:<15} {row[3]}")
+        log(f"{row[0]}  {row[1]:<15} {row[3]}")
+
     appended = append_rows_to_sheet(rows)
 
     if max_rowid > last_rowid:
         state["last_rowid"] = max_rowid
         save_state(state)
 
-    print(f"Appended {appended} rows. last_rowid={state['last_rowid']}")
+    log(f"Appended {appended} row(s). last_rowid={state['last_rowid']}")
 
 if __name__ == "__main__":
     main()
