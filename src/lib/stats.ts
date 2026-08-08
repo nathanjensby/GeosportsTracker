@@ -1,5 +1,7 @@
 import { sortByFields, type SortField } from "@/lib/sort";
 import type {
+  ChallengeTimeHighlight,
+  ChallengeTimeStats,
   DailyPlayerStat,
   DailyResult,
   HeadToHeadMatchup,
@@ -287,6 +289,41 @@ export function computeSummaryStats(
       allScores.length > 0 ? Math.round(allScores.reduce((sum, s) => sum + s, 0) / allScores.length) : 0,
     topPlayer: topPlayer && topPlayer.gamesPlayed > 0 ? topPlayer : null,
     latestDay: sortedDays.at(-1) ?? null,
+  };
+}
+
+/** MapTap Challenge-only highlights derived from its extra completion-time data. */
+export function computeChallengeTimeStats(dailyResults: DailyResult[]): ChallengeTimeStats {
+  let fastestTime: ChallengeTimeHighlight | null = null;
+  let mostTimeToSpare: ChallengeTimeHighlight | null = null;
+  let totalTimeSeconds = 0;
+  let timedRuns = 0;
+
+  for (const day of dailyResults) {
+    for (const dayScore of day.scores) {
+      if (dayScore.timeSeconds === undefined || dayScore.timeToSpareSeconds === undefined) continue;
+
+      const highlight: ChallengeTimeHighlight = {
+        playerId: dayScore.playerId,
+        date: day.date,
+        timeSeconds: dayScore.timeSeconds,
+        timeToSpareSeconds: dayScore.timeToSpareSeconds,
+      };
+
+      if (!fastestTime || highlight.timeSeconds < fastestTime.timeSeconds) fastestTime = highlight;
+      if (!mostTimeToSpare || highlight.timeToSpareSeconds > mostTimeToSpare.timeToSpareSeconds) {
+        mostTimeToSpare = highlight;
+      }
+
+      totalTimeSeconds += dayScore.timeSeconds;
+      timedRuns++;
+    }
+  }
+
+  return {
+    fastestTime,
+    mostTimeToSpare,
+    averageTimeSeconds: timedRuns > 0 ? Math.round((totalTimeSeconds / timedRuns) * 10) / 10 : null,
   };
 }
 

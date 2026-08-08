@@ -1,5 +1,5 @@
 /**
- * Core domain types for GeoSports Tracker.
+ * Core domain types for Geostats Tracker.
  *
  * These shapes are intentionally decoupled from any one data source. Mock data,
  * a Google Sheet, or a future database all get normalized into these types by
@@ -7,7 +7,7 @@
  * data layer should know or care where the data actually came from.
  */
 
-/** A member of the friend group who submits GeoSports scores. */
+/** A member of the friend group who submits scores. */
 export interface Player {
   id: string;
   name: string;
@@ -15,17 +15,24 @@ export interface Player {
   avatarUrl?: string;
 }
 
+/** One of the games tracked from the group chat. */
+export type Game = "geosports" | "maptap" | "maptap-challenge";
+
 /**
  * A single raw score submission, as it comes off the source of truth (an
- * iMessage thread synced into a Google Sheet "RawData" tab today). Score is
- * out of 1,000 — higher is better.
+ * iMessage thread synced into a Google Sheet "RawData" tab today).
  */
 export interface ScoreEntry {
   id: string;
   playerId: string;
+  game: Game;
   /** ISO 8601 timestamp of when the score was posted. */
   timestamp: string;
   score: number;
+  /** Completion time in seconds. Only ever set for `maptap-challenge` entries. */
+  timeSeconds?: number;
+  /** Seconds of the time limit left unused when submitted. Only ever set for `maptap-challenge` entries. */
+  timeToSpareSeconds?: number;
   /** The original raw message text, kept for debugging/audit purposes. */
   rawMessage?: string;
 }
@@ -34,6 +41,10 @@ export interface ScoreEntry {
 export interface DailyScore {
   playerId: string;
   score: number;
+  /** Completion time in seconds. Only ever set for `maptap-challenge` results. */
+  timeSeconds?: number;
+  /** Seconds of the time limit left unused when submitted. Only ever set for `maptap-challenge` results. */
+  timeToSpareSeconds?: number;
 }
 
 /** A full day of GeoSports results across every player who played. */
@@ -161,6 +172,21 @@ export interface HeadToHeadStats {
   recentMatchups: HeadToHeadMatchup[];
 }
 
+/** One player's fastest-time or best-time-to-spare highlight for MapTap Challenge. */
+export interface ChallengeTimeHighlight {
+  playerId: string;
+  date: string;
+  timeSeconds: number;
+  timeToSpareSeconds: number;
+}
+
+/** MapTap Challenge-only stats derived from its extra completion-time data. */
+export interface ChallengeTimeStats {
+  fastestTime: ChallengeTimeHighlight | null;
+  mostTimeToSpare: ChallengeTimeHighlight | null;
+  averageTimeSeconds: number | null;
+}
+
 /** Dashboard-wide summary numbers shown in the stats row up top. */
 export interface SummaryStats {
   totalGamesLogged: number;
@@ -176,6 +202,6 @@ export interface SummaryStats {
  * `DataSource` implementation, not touching any component or page.
  */
 export interface DataSource {
-  getPlayers(): Promise<Player[]>;
-  getDailyResults(): Promise<DailyResult[]>;
+  getPlayers(game: Game): Promise<Player[]>;
+  getDailyResults(game: Game): Promise<DailyResult[]>;
 }

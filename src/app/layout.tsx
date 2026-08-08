@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GeoSports Tracker",
-  description: "Daily GeoSports scores, leaderboards, and bragging rights for the group.",
+  title: "GeoStats Tracker",
+  description: "Daily scores, leaderboards, and bragging rights for the group.",
 };
 
 export default function RootLayout({

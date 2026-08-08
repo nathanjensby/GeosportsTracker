@@ -1,4 +1,4 @@
-import type { Player, ScoreEntry } from "@/types";
+import type { Game, Player, ScoreEntry } from "@/types";
 import { resolveSenderToPlayer } from "./player-directory";
 
 /** What a single Google Sheets cell can come back as. */
@@ -10,6 +10,21 @@ interface ParsedRawRows {
 }
 
 const ISO_LIKE = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/;
+
+const KNOWN_GAMES = new Set<Game>(["geosports", "maptap", "maptap-challenge"]);
+
+/** Rows written before multi-game support have no `game` cell — those are all GeoSports. */
+function parseGame(raw: SheetCellValue | undefined): Game | null {
+  if (raw == null || raw === "") return "geosports";
+  const value = String(raw);
+  return KNOWN_GAMES.has(value as Game) ? (value as Game) : null;
+}
+
+function parseOptionalNumber(raw: SheetCellValue | undefined): number | undefined {
+  if (raw == null || raw === "") return undefined;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : undefined;
+}
 
 // Google Sheets' date serial epoch: December 30, 1899.
 const SHEETS_SERIAL_EPOCH_UTC_MS = Date.UTC(1899, 11, 30);
@@ -60,7 +75,9 @@ export function parseRawRows(rows: SheetCellValue[][]): ParsedRawRows {
   const players = new Map<string, Player>();
 
   rows.forEach((row, index) => {
-    const [msgTimeRaw, senderRaw, messageRaw, scoreRaw] = row;
+    // Column E ("player") is the sheet owner's own formula, unrelated to
+    // this app — skipped over rather than reused.
+    const [msgTimeRaw, senderRaw, messageRaw, scoreRaw, , gameRaw, timeSecondsRaw, timeToSpareRaw] = row;
     if (msgTimeRaw == null || senderRaw == null || scoreRaw === undefined) return;
 
     const score = Number(scoreRaw);
@@ -69,6 +86,9 @@ export function parseRawRows(rows: SheetCellValue[][]): ParsedRawRows {
     const timestamp = parseSheetTimestamp(msgTimeRaw);
     if (!timestamp) return;
 
+    const game = parseGame(gameRaw);
+    if (!game) return;
+
     const sender = String(senderRaw);
     const player = resolveSenderToPlayer(sender);
     players.set(player.id, player);
@@ -76,8 +96,11 @@ export function parseRawRows(rows: SheetCellValue[][]): ParsedRawRows {
     entries.push({
       id: `${timestamp}-${player.id}-${index}`,
       playerId: player.id,
+      game,
       timestamp,
       score,
+      timeSeconds: parseOptionalNumber(timeSecondsRaw),
+      timeToSpareSeconds: parseOptionalNumber(timeToSpareRaw),
       rawMessage: messageRaw == undefined ? undefined : String(messageRaw),
     });
   });

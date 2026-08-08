@@ -71,7 +71,12 @@ function getSheetsClient(config: SheetsConfig): sheets_v4.Sheets {
 }
 
 /**
- * Raw rows from the RawData tab: [msg_time, sender, message, score].
+ * Raw rows from the RawData tab: [msg_time, sender, message, score, player,
+ * game, time_seconds, time_to_spare]. Column E ("player") is the sheet
+ * owner's own formula, unrelated to this app — skipped over rather than
+ * reused. Game/time live in F-H and are absent on rows written before
+ * multi-game support; parseRawRows in parse.ts fills in sensible defaults
+ * for those.
  *
  * Uses UNFORMATTED_VALUE deliberately: Sheets auto-converts date-looking text
  * into a real Date value on ingestion (the sync script writes with
@@ -88,7 +93,7 @@ export async function fetchRawRows(): Promise<SheetCellValue[][]> {
 
   const response = await client.spreadsheets.values.get({
     spreadsheetId: config.spreadsheetId,
-    range: `${config.worksheetName}!A:D`,
+    range: `${config.worksheetName}!A:H`,
     valueRenderOption: "UNFORMATTED_VALUE",
   });
 

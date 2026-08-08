@@ -3,7 +3,7 @@
  * to diagnose discrepancies against an external source (e.g. a hand-built
  * Excel leaderboard). Usage:
  *
- *   npx tsx scripts/audit-player.ts "Steve Miller"
+ *   npx tsx scripts/audit-player.ts "Steve Miller" [geosports|maptap|maptap-challenge]
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -35,7 +35,7 @@ async function fetchRawRows() {
   const client = google.sheets({ version: "v4", auth });
   const response = await client.spreadsheets.values.get({
     spreadsheetId,
-    range: `${worksheetName}!A:D`,
+    range: `${worksheetName}!A:H`,
     valueRenderOption: "UNFORMATTED_VALUE",
   });
   return response.data.values ?? [];
@@ -49,14 +49,17 @@ async function main() {
 
   const query = process.argv[2];
   if (!query) {
-    console.error('Usage: npx tsx scripts/audit-player.ts "Player Name"');
+    console.error('Usage: npx tsx scripts/audit-player.ts "Player Name" [geosports|maptap|maptap-challenge]');
     process.exit(1);
   }
+  const game = (process.argv[3] || "geosports") as "geosports" | "maptap" | "maptap-challenge";
 
   const rows = await fetchRawRows();
-  const { entries, players } = parseRawRows(rows);
+  const { entries: allEntries, players } = parseRawRows(rows);
+  const entries = allEntries.filter((e) => e.game === game);
 
-  console.log(`Total raw rows: ${rows.length}, parsed score entries: ${entries.length}`);
+  console.log(`Game: ${game}`);
+  console.log(`Total raw rows: ${rows.length}, parsed score entries: ${entries.length} (of ${allEntries.length} across all games)`);
 
   // Flag senders that showed up in the sheet but aren't in the directory —
   // these get auto-registered under a raw/slugified id and could be the same
@@ -76,7 +79,7 @@ async function main() {
     process.exit(1);
   }
 
-  const dailyResults = aggregateDailyResults(entries);
+  const dailyResults = aggregateDailyResults(entries, game);
   const allStats = computePlayerStats([...players.values()], dailyResults);
   const stats = allStats.find((s) => s.playerId === target.id)!;
 

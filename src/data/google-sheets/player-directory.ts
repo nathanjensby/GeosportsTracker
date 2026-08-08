@@ -15,6 +15,8 @@ export const SENDER_DIRECTORY: Record<string, Player> = {
   "15129716942": { id: "justin", name: "Justin Wiseman" },
   "18062362938": { id: "lincoln", name: "Lincoln Youree" },
   "15122030590": { id: "eric", name: "Eric Sherrill" },
+  "15124206222": { id: "robert", name: "Robert Leary" },
+  "18174374155": { id: "stephen", name: "Stephen Hanson" },
   // "+15551234567": { id: "jake", name: "Jake" },
 };
 
